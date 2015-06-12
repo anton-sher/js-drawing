@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html>
+<head lang="en">
+    <meta charset="UTF-8">
+    <title></title>
+</head>
+<body>
+<canvas id="myCanvas" width="600" height="600" style="border: 1px solid #d3d3d3;">
+    Your browser does not support HTML5 canvas.
+</canvas>
+<script>
+    var c = document.getElementById("myCanvas");
+    var ctx = c.getContext("2d");
+
+    var xCenter = c.width / 2;
+    var yCenter = c.height / 2;
+    var size = Math.min(c.width, c.height);
+    var norm = size / 2 * 0.8;
+
+    function drawLine(x, y, dx, dy) {
+        var sx = xCenter + x * norm;
+        var sy = yCenter - y * norm;
+        ctx.moveTo(sx, sy);
+        ctx.lineTo(sx + dx * norm, sy - dy * norm);
+        ctx.stroke();
+    }
+
+    var pi = Math.asin(1) * 2;
+
+    function turn(dx, dy, alpha) {
+        var r = Math.sqrt(dx * dx + dy * dy);
+        var beta;
+        if (dx >= 0 && dy >= 0) {
+            beta = Math.acos(dx / r);
+        } else if (dx >= 0 && dy < 0) {
+            beta = 2 * pi - Math.acos(dx / r);
+        } else if (dx < 0 && dy >= 0) {
+            beta = pi - Math.acos(Math.abs(dx) / r);
+        } else {
+            beta = Math.acos(Math.abs(dx) / r) + pi;
+        }
+        var gamma = alpha + beta;
+
+        var result = {};
+        result.dx = r * Math.cos(gamma);
+        result.dy = r * Math.sin(gamma);
+
+        return result;
+    }
+
+    function srp(x, y, dx, dy) {
+        var r = Math.sqrt(dx * dx + dy * dy);
+
+        if (r * norm < 5) {
+            drawLine(x, y, dx, dy);
+            return;
+        }
+
+        srp(x, y, dx / 3.0, dy / 3.0);
+        var turnup = turn(dx / 3.0, dy / 3.0, pi / 3.0);
+        srp(x + dx / 3.0, y + dy / 3.0, turnup.dx, turnup.dy);
+        var turndown = turn(dx / 3.0, dy / 3.0, -pi / 3.0);
+        srp(x + dx / 3.0 + turnup.dx, y + dy / 3.0 + turnup.dy, turndown.dx, turndown.dy);
+        srp(x + dx * 2.0 / 3.0, y + dy * 2.0 / 3.0, dx / 3.0, dy / 3.0);
+    }
+
+    var side1 = turn(0, 2 * Math.cos(pi / 6.0), -5 * pi / 6.0);
+    var side2 = turn(0, 2 * Math.cos(pi / 6.0), pi/2.0);
+    var side3 = turn(0, 2 * Math.cos(pi / 6.0), -pi/6.0);
+
+    var xTop = 0;
+    var yTop = 1;
+    srp(xTop, yTop, side1.dx, side1.dy);
+    srp(xTop + side1.dx, yTop + side1.dy, side2.dx, side2.dy);
+    srp(xTop + side1.dx + side2.dx, yTop + side1.dy + side2.dy, side3.dx, side3.dy);
+</script>
+</body>
+</html>
