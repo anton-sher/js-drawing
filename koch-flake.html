@@ -5,12 +5,22 @@
     <title></title>
 </head>
 <body>
-<canvas id="myCanvas" width="600" height="600" style="border: 1px solid #d3d3d3;">
+<table><tr><td>
+<canvas id="myCanvas" width="700" height="700" style="border: 1px solid #d3d3d3;">
     Your browser does not support HTML5 canvas.
 </canvas>
+</td><td>
+<button onclick="clearCanvas()">Clear</button><br>
+<button onclick="drawSerpinskiTriangle()">Serpinski's triangle</button><br>
+<button onclick="drawKochFlake()">Koch's flake</button><br>
+</td></tr></table>
 <script>
     var c = document.getElementById("myCanvas");
     var ctx = c.getContext("2d");
+
+    function clearCanvas() {
+        ctx.clearRect(0, 0, c.width, c.height);
+    }
 
     var xCenter = c.width / 2;
     var yCenter = c.height / 2;
@@ -22,7 +32,13 @@
         var sy = yCenter - y * norm;
         ctx.moveTo(sx, sy);
         ctx.lineTo(sx + dx * norm, sy - dy * norm);
+        ctx.lineWidth = 1;
         ctx.stroke();
+    }
+
+    function drawColorArray(arr) {
+        var imageData = ctx.createImageData(c.width, c.height);
+
     }
 
     var pi = Math.asin(1) * 2;
@@ -48,31 +64,69 @@
         return result;
     }
 
-    function srp(x, y, dx, dy) {
-        var r = Math.sqrt(dx * dx + dy * dy);
+    function drawKochFlake() {
+        clearCanvas();
 
-        if (r * norm < 5) {
-            drawLine(x, y, dx, dy);
-            return;
+        function koch(x, y, dx, dy) {
+            var r = Math.sqrt(dx * dx + dy * dy);
+
+            if (r * norm < 5) {
+                drawLine(x, y, dx, dy);
+                return;
+            }
+
+            koch(x, y, dx / 3.0, dy / 3.0);
+            var turnup = turn(dx / 3.0, dy / 3.0, pi / 3.0);
+            koch(x + dx / 3.0, y + dy / 3.0, turnup.dx, turnup.dy);
+            var turndown = turn(dx / 3.0, dy / 3.0, -pi / 3.0);
+            koch(x + dx / 3.0 + turnup.dx, y + dy / 3.0 + turnup.dy, turndown.dx, turndown.dy);
+            koch(x + dx * 2.0 / 3.0, y + dy * 2.0 / 3.0, dx / 3.0, dy / 3.0);
         }
 
-        srp(x, y, dx / 3.0, dy / 3.0);
-        var turnup = turn(dx / 3.0, dy / 3.0, pi / 3.0);
-        srp(x + dx / 3.0, y + dy / 3.0, turnup.dx, turnup.dy);
-        var turndown = turn(dx / 3.0, dy / 3.0, -pi / 3.0);
-        srp(x + dx / 3.0 + turnup.dx, y + dy / 3.0 + turnup.dy, turndown.dx, turndown.dy);
-        srp(x + dx * 2.0 / 3.0, y + dy * 2.0 / 3.0, dx / 3.0, dy / 3.0);
+        var side1 = turn(0, 2 * Math.cos(pi / 6.0), -5 * pi / 6.0);
+        var side2 = turn(0, 2 * Math.cos(pi / 6.0), pi / 2.0);
+        var side3 = turn(0, 2 * Math.cos(pi / 6.0), -pi / 6.0);
+
+        var xTop = 0;
+        var yTop = 1;
+        koch(xTop, yTop, side1.dx, side1.dy);
+        koch(xTop + side1.dx, yTop + side1.dy, side2.dx, side2.dy);
+        koch(xTop + side1.dx + side2.dx, yTop + side1.dy + side2.dy, side3.dx, side3.dy);
     }
 
-    var side1 = turn(0, 2 * Math.cos(pi / 6.0), -5 * pi / 6.0);
-    var side2 = turn(0, 2 * Math.cos(pi / 6.0), pi/2.0);
-    var side3 = turn(0, 2 * Math.cos(pi / 6.0), -pi/6.0);
+    function drawSerpinskiTriangle() {
+        clearCanvas();
 
-    var xTop = 0;
-    var yTop = 1;
-    srp(xTop, yTop, side1.dx, side1.dy);
-    srp(xTop + side1.dx, yTop + side1.dy, side2.dx, side2.dy);
-    srp(xTop + side1.dx + side2.dx, yTop + side1.dy + side2.dy, side3.dx, side3.dy);
+        function drawInternalLines(x, y, len) {
+            if (len * norm < 5) {
+                return;
+            }
+
+            var line1 = turn(0, len, pi / 6.0);
+            var line2 = turn(len, 0, 0);
+            var line3 = turn(len, 0, -2 * pi / 3.0);
+
+            drawLine(x, y, line1.dx, line1.dy);
+            drawLine(x + line1.dx, y + line1.dy, line2.dx, line2.dy);
+            drawLine(x + line1.dx + line2.dx, y + line1.dy + line2.dy, line3.dx, line3.dy);
+
+            drawInternalLines(x - len / 2.0, y, len / 2.0);
+            drawInternalLines(x + len / 2.0, y, len / 2.0);
+            drawInternalLines(x, y + len * Math.cos(pi / 6), len / 2.0);
+        }
+
+        var x = -1;
+        var y = -0.7;
+
+        var line1 = turn(2, 0, 0);
+        var line2 = turn(2, 0, 2.0 * pi / 3.0);
+        var line3 = turn(2, 0, 4.0 * pi / 3.0);
+
+        drawLine(x, y, line1.dx, line1.dy);
+        drawLine(x + line1.dx, y + line1.dy, line2.dx, line2.dy);
+        drawLine(x + line1.dx + line2.dx, y + line1.dy + line2.dy, line3.dx, line3.dy);
+        drawInternalLines(0, -0.7, 1);
+    }
 </script>
 </body>
 </html>
