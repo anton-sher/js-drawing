@@ -5,16 +5,34 @@
     <title></title>
 </head>
 <body>
-<table><tr><td>
-<canvas id="myCanvas" width="700" height="700" style="border: 1px solid #d3d3d3;">
-    Your browser does not support HTML5 canvas.
-</canvas>
-</td><td>
-<button onclick="clearCanvas()">Clear</button><br>
-<button onclick="drawSerpinskiTriangle()">Serpinski's triangle</button><br>
-<button onclick="drawKochFlake()">Koch's flake</button><br>
-</td></tr></table>
+<table>
+    <tr>
+        <td>
+            <canvas id="myCanvas" width="700" height="700" style="border: 1px solid #d3d3d3;">
+                Your browser does not support HTML5 canvas.
+            </canvas>
+        </td>
+        <td>
+            <button onclick="clearCanvas()">Clear</button>
+            <br>
+            <button onclick="drawSerpinskiTriangle()">Serpinski's triangle</button>
+            <br>
+            <button onclick="drawKochFlake()">Koch's flake</button>
+            <br>
+            <button onclick="drawMandelbrot()">Mandelbrot's set</button>
+            <br>
+        </td>
+    </tr>
+</table>
 <script>
+    var debugOn = false;
+
+    function debug(msg) {
+        if (debugOn) {
+            console.log(msg);
+        }
+    }
+
     var c = document.getElementById("myCanvas");
     var ctx = c.getContext("2d");
 
@@ -37,8 +55,70 @@
     }
 
     function drawColorArray(arr) {
-        var imageData = ctx.createImageData(c.width, c.height);
+        var imageData = ctx.createImageData(arr.length, arr[0].length);
+        var pos = 0;
+        for (var y = 0; y < arr[0].length; y++) {
+            for (var x = 0; x < arr.length; x++) {
+                var pixel = arr[x][y];
+                imageData.data[pos] = pixel % 256;
+                imageData.data[pos + 1] = pixel / 256 % 256;
+                imageData.data[pos + 2] = pixel / 256 / 256 % 256;
+                imageData.data[pos + 3] = 255;
+                pos += 4;
+            }
+        }
+        ctx.putImageData(imageData, 0, 0);
+    }
 
+    function complexNumber(re, im) {
+        return {'re': re, 'im': im};
+    }
+
+    function complexAdd(a, b) {
+        return complexNumber(a.re + b.re, a.im + b.im);
+    }
+
+    function complexMul(a, b) {
+        return complexNumber(a.re * b.re - a.im * b.im, a.re * b.im + a.im * b.re);
+    }
+
+    function complexSqr(a) {
+        return complexMul(a, a);
+    }
+
+    function complexAbs(a) {
+        return Math.sqrt(a.re * a.re + a.im * a.im);
+    }
+
+    function createMandelbrotSet(width, height, perPixel, threshold) {
+        debug("Mandelbrot set start " + width + "x" + height + ", pp:" + perPixel);
+        var ms = [];
+        var xCenter = width * 3 / 4;
+        var yCenter = height / 2;
+        for (var x = 0; x < width; x++) {
+            ms.push([]);
+            debug("Mandelbrot row " + x);
+            for (var y = 0; y < height; y++) {
+                var re = (x - xCenter) * perPixel;
+                var im = (y - yCenter) * perPixel;
+                var c = complexNumber(re, im);
+                var a = complexNumber(0, 0);
+                var itr = 0;
+                while (itr < 100 && complexAbs(a) < threshold) {
+                    a = complexAdd(complexSqr(a), c);
+                    ++itr;
+                }
+                var clr = itr + (itr / 16) * 256 + (itr / 8) * 256 * 256;
+                ms[x].push(clr);
+            }
+        }
+        return ms;
+    }
+
+    function drawMandelbrot() {
+        clearCanvas();
+
+        drawColorArray(createMandelbrotSet(c.width, c.height, 0.005, 2));
     }
 
     var pi = Math.asin(1) * 2;
@@ -70,7 +150,7 @@
         function koch(x, y, dx, dy) {
             var r = Math.sqrt(dx * dx + dy * dy);
 
-            if (r * norm < 5) {
+            if (r * norm < 10) {
                 drawLine(x, y, dx, dy);
                 return;
             }
